@@ -68,6 +68,8 @@ rule read_lengths:
     shell:
         """
         python3 {params.read_lengths_script} {input.reads} > {output.read_lenghts_json}
+	echo {input.reads}
+	echo "read_lengths"
         """
 
 rule read_lengths_from_workdir:
@@ -88,7 +90,9 @@ rule read_lengths_from_workdir:
     shell:
         """
         python3 {params.read_lengths_script} {input.reads} > {output.read_lenghts_json}
-        """
+        echo {input.reads}
+        echo "read_lengths_from_workdir"
+	"""
 
 ruleorder: read_lengths > read_lengths_from_workdir
 
@@ -119,6 +123,8 @@ rule deduplicate_create_clusters:
         mkdir -p {params.tmp_dir_clusters}
         python3 {params.clustering_script} -r {input.reads} -o {params.tmp_dir_clusters} \
             -n {params.num_of_clusters} -l {input.reads_lengths}
+	echo {input.reads}
+        echo "deduplicate_creat_clusters"
         """
 
 rule deduplicate_blat:
@@ -142,7 +148,9 @@ rule deduplicate_blat:
         """
         mkdir -p {params.out_pls_dir}
         blat {input.reads_cluster} {input.reads_cluster} {output.out_pls}
-        """
+        echo {input.reads_cluster}
+        echo "deduplicate_blat"
+	"""
 
 rule deduplicate_find_duplicates:
     input:
@@ -163,7 +171,9 @@ rule deduplicate_find_duplicates:
     shell:
         """
         python3 {params.find_duplicates_script} -p {input.pls_file} -s {params.similarity_threshold} > {output.out_duplicates_csv}
-        """
+        echo {input.pls_file}
+        echo "deduplicate_find_duplicates"
+	"""
 
 rule deduplicate_merge_duplicates_sets:
     input:
@@ -201,7 +211,9 @@ rule deduplicate:
     shell:
         """
         python3 {params.deduplicate_script} -r {input.reads} -d {input.duplicates_csv} > {output.deduplicated_reads}
-        """
+        echo {input.reads}
+	echo "deduplicate"
+	"""
 
 rule not_deduplicated_reads:
     input:
@@ -213,6 +225,8 @@ rule not_deduplicated_reads:
     shell:
         """
         ln -s {input.reads} {output.out_reads}
+	echo {input.reads}
+	echo "not_deduplicated_reads"
         """
 
 ############################################################s
@@ -242,7 +256,9 @@ rule align_to_megares:
     shell:
         """
         minimap2 -t {threads} {params.minimap_flags} {input.megares_v2_seqs} {input.reads} -o {output.megares_out_sam}
-        """
+        echo {input.reads}
+	echo "align_to_megares"
+	"""
 
 rule align_to_mges:
     input:
@@ -267,7 +283,9 @@ rule align_to_mges:
     shell:
         """
         minimap2 -t {threads} {params.minimap_flags} {input.mges_database} {input.reads} -o {output.mges_out_sam}
-        """
+        echo {input.reads}
+	echo "align_to_mges"
+	"""
 
 rule align_to_kegg:
     input:
@@ -293,7 +311,9 @@ rule align_to_kegg:
     shell:
         """
         minimap2 -t {threads} {params.minimap_flags} {input.kegg_database} {input.reads} -o {output.kegg_out_sam}
-        """
+        echo {input.reads}
+	echo "align_to_kegg"
+	"""
 
 rule pass_config_file:
     output:
@@ -344,7 +364,9 @@ rule resistome_and_mobilome:
             -m {input.mges_sam} \
             -c {input.config_file} \
             -o {params.output_prefix}
-        """
+        echo {input.megares_sam}
+	echo "res_and_mob"
+	"""
 
 rule find_colocalizations:
     input:
@@ -378,7 +400,9 @@ rule find_colocalizations:
             -c {input.config_file} \
             -o {params.output_directory} \
             > {output.colocalizations}
-        """
+        echo {input.reads}
+	echo "find_colocalizations"
+	"""
 
 rule colocalization_richness:
     input:
@@ -402,7 +426,9 @@ rule colocalization_richness:
             -i {input.colocalizations} \
             -c {input.config_file} \
             > {output.colocalizations_richness}
-        """
+        echo {input.colocalizations}
+	echo "colocalization_richness"
+	"""
 
 
 ############################################################
@@ -509,8 +535,9 @@ rule get_megares_v2:
     shell:
         """
         mkdir -p {databases_dir}
-        wget http://megares.meglab.org/download/megares_v2.00/megares_full_database_v2.00.fasta -O {output.megares_v2_seqs}
-        wget http://megares.meglab.org/download/megares_v2.00/megares_full_annotations_v2.00.csv -O {output.megares_v2_ontology}
+        wget https://www.meglab.org/downloads/megares_v2.00/megares_full_database_v2.00.fasta -O {output.megares_v2_seqs} --no-check-certificate
+        wget https://www.meglab.org/downloads/megares_v2.00/megares_full_annotations_v2.00.csv -O {output.megares_v2_ontology} --no-check-certificate
+	sed -i '/RequiresSNPConfirmation/{N;d;}' {output.megares_v2_seqs} 
         """
 
 
@@ -550,7 +577,7 @@ rule get_iceberg_db:
     shell:
         """
         mkdir -p {databases_dir}
-        wget https://bioinfo-mml.sjtu.edu.cn/ICEberg2/download/ICE_seq_all.fas -O {output.iceberg_db}
+        wget https://bioinfo-mml.sjtu.edu.cn/ICEberg2/download/ICE_seq_all.fas -O {output.iceberg_db} --no-check-certificate
         """
 
 rule get_MGEs_DBs:
