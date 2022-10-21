@@ -537,7 +537,7 @@ rule get_megares_v2:
         mkdir -p {databases_dir}
         wget https://www.meglab.org/downloads/megares_v2.00/megares_full_database_v2.00.fasta -O {output.megares_v2_seqs} --no-check-certificate
         wget https://www.meglab.org/downloads/megares_v2.00/megares_full_annotations_v2.00.csv -O {output.megares_v2_ontology} --no-check-certificate
-	sed -i '/RequiresSNPConfirmation/{N;d;}' {output.megares_v2_seqs} 
+	sed -i '/RequiresSNPConfirmation/{{N;d;}}' {output.megares_v2_seqs} 
         """
 
 
