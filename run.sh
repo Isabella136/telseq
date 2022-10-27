@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=TLS-disp
+#SBATCH --job-name=XTAC
 #SBATCH --account=boucher
 #SBATCH --qos=boucher
 #SBATCH --mail-type=FAIL
