@@ -532,6 +532,11 @@ rule get_megares_v2:
         megares_v2_seqs = os.path.join(databases_dir,"megares_full_database_v2.00.fasta"),
         megares_v2_ontology = os.path.join(databases_dir,"megares_full_annotations_v2.00.csv")
 
+    conda:
+        "workflow/envs/download_databases.yaml"
+    envmodules:
+        "python/3.8"
+
     shell:
         """
         mkdir -p {databases_dir}
@@ -547,6 +552,11 @@ rule get_plasmid_finder_db:
 
     output:
         plasmid_finder_db = databases_dir + "/plasmid_finder_db.fasta"
+
+    conda:
+        "workflow/envs/download_databases.yaml"
+    envmodules:
+        "python/3.8"
 
     shell:
         """
@@ -564,6 +574,11 @@ rule get_aclame_db:
     output:
         aclame_db = databases_dir + "/aclame_db.fasta"
 
+    conda:
+        "workflow/envs/download_databases.yaml"
+    envmodules:
+        "python/3.8"
+
     shell:
         """
         mkdir -p {databases_dir}
@@ -573,6 +588,11 @@ rule get_aclame_db:
 rule get_iceberg_db:
     output:
         iceberg_db = databases_dir + "/iceberg_db.fasta"
+
+    conda:
+        "workflow/envs/download_databases.yaml"
+    envmodules:
+        "python/3.8"
 
     shell:
         """
@@ -589,6 +609,11 @@ rule get_MGEs_DBs:
     output:
         mges_combined_db = databases_dir + "/mges_combined.fasta"
 
+    conda:
+        "workflow/envs/download_databases.yaml"
+    envmodules:
+        "python/3.8"
+
     shell:
         """
         mkdir -p {databases_dir}
@@ -603,7 +628,7 @@ rule get_KEGG_DBs:
         kegg_prokaryotes_db = databases_dir + "/kegg_genes.fasta"
 
     conda:
-        "workflow/envs/pipeline.yaml"
+        "workflow/envs/download_databases.yaml"
     envmodules:
         "python/3.8"
 
