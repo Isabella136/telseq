@@ -1,7 +1,7 @@
 ############################################################
 ## Imports
 ############################################################
-import os, ast
+import os, ast, glob
 
 ############################################################
 ## Messages
@@ -229,13 +229,13 @@ rule not_deduplicated_reads:
 	echo "not_deduplicated_reads"
         """
 
-############################################################s
+#################################################e###########s
 # Alignment
 
 rule align_to_megares:
     input:
         reads = "{sample_name}.fastq" + DEDUP_STRING,
-        megares_v2_seqs = ancient(databases_dir + "/" + "megares_full_database_v2.00.fasta")
+        megares_v2_seqs = ancient(databases_dir + "/" + "megares_modified_database_v2.00.fasta")
 
     params:
         minimap_flags = config["MINIMAP2"]["ALIGNER_PB_OPTION"] + " "
@@ -324,8 +324,8 @@ rule pass_config_file:
         with open(output.out_config_file,'w') as configfile_out:
             config_to_pass = dict(config)
             config_to_pass["DATABASE"] = dict()
-            config_to_pass["DATABASE"]["MEGARES"] = databases_dir + "/" + "megares_full_database_v2.00.fasta"
-            config_to_pass["DATABASE"]["MEGARES_ONTOLOGY"] = databases_dir + "/" + "megares_full_annotations_v2.00.csv"
+            config_to_pass["DATABASE"]["MEGARES"] = databases_dir + "/" + "megares_modified_database_v2.00.fasta"
+            config_to_pass["DATABASE"]["MEGARES_ONTOLOGY"] = databases_dir + "/" + "megares_modified_annotations_v2.00.csv"
             config_to_pass["DATABASE"]["MGES"] = databases_dir + "/" + "mges_combined.fasta"
             config_to_pass["DATABASE"]["KEGG"] = databases_dir + "/" + "kegg_genes.fasta"
             config_parser = configparser.ConfigParser()
@@ -460,8 +460,8 @@ rule read_lengths_plot:
 
 rule violin_plots_notebook:
     input:
-        megares_db = databases_dir + "/megares_full_database_v2.00.fasta",
-        megares_annotation = databases_dir + "/megares_full_annotations_v2.00.csv",
+        megares_db = databases_dir + "/megares_modified_database_v2.00.fasta  ",
+        megares_annotation = databases_dir + "/megares_modified_annotations_v2.00.csv",
         config_file = "config.ini",
         data = expand("{sample_name}.fastq{ext}",sample_name=SAMPLES,ext=EXTS)
 
@@ -482,8 +482,8 @@ rule violin_plots_notebook:
 
 rule heatmap_notebook:
     input:
-        megares_db = databases_dir + "/megares_full_database_v2.00.fasta",
-        megares_annotation = databases_dir + "/megares_full_annotations_v2.00.csv",
+        megares_db = databases_dir + "/megares_modified_database_v2.00.fasta",
+        megares_annotation = databases_dir + "/megares_modified_annotations_v2.00.csv",
         config_file = "config.ini",
         data = expand("{sample_name}.fastq{ext}",sample_name=SAMPLES,ext=EXTS)
 
@@ -504,8 +504,8 @@ rule heatmap_notebook:
 
 rule colocalization_visualizations_notebook:
     input:
-        megares_db = databases_dir + "/megares_full_database_v2.00.fasta",
-        megares_annotation = databases_dir + "/megares_full_annotations_v2.00.csv",
+        megares_db = databases_dir + "/megares_modified_database_v2.00.fasta",
+        megares_annotation = databases_dir + "/megares_modified_annotations_v2.00.csv",
         mges_db = databases_dir + "/mges_combined.fasta",
         kegg_db = databases_dir + "/kegg_genes.fasta",
         dedup_reads_lenght = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
@@ -529,8 +529,8 @@ rule colocalization_visualizations_notebook:
 
 rule get_megares_v2:
     output:
-        megares_v2_seqs = os.path.join(databases_dir,"megares_full_database_v2.00.fasta"),
-        megares_v2_ontology = os.path.join(databases_dir,"megares_full_annotations_v2.00.csv")
+        megares_v2_seqs = os.path.join(databases_dir,"megares_modified_database_v2.00.fasta"),
+        megares_v2_ontology = os.path.join(databases_dir,"megares_modified_annotations_v2.00.csv")
 
     conda:
         "workflow/envs/download_databases.yaml"
@@ -540,9 +540,13 @@ rule get_megares_v2:
     shell:
         """
         mkdir -p {databases_dir}
-        wget https://www.meglab.org/downloads/megares_v2.00/megares_full_database_v2.00.fasta -O {output.megares_v2_seqs} --no-check-certificate
-        wget https://www.meglab.org/downloads/megares_v2.00/megares_full_annotations_v2.00.csv -O {output.megares_v2_ontology} --no-check-certificate
-	sed -i '/RequiresSNPConfirmation/{{N;d;}}' {output.megares_v2_seqs} 
+
+        cd {databases_dir}
+        wget https://www.meglab.org/downloads/megares_v2.00.zip
+        unzip megares_v2.00.zip
+        rm megares_v2.00.zip
+        sed -i '/RequiresSNPConfirmation/{{N;d;}}' {output.megares_v2_seqs} 
+
         """
 
 
