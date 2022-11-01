@@ -545,6 +545,7 @@ rule get_megares_v2:
         wget https://www.meglab.org/downloads/megares_v2.00.zip
         unzip megares_v2.00.zip
         rm megares_v2.00.zip
+	cd ../
         sed -i '/RequiresSNPConfirmation/{{N;d;}}' {output.megares_v2_seqs} 
 
         """
