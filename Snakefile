@@ -643,8 +643,8 @@ rule get_KEGG_DBs:
 
     shell:
         """
-        cp "/blue/boucher/marco.oliva/data/MGE_DBs/KEGG/kegg_prokaryotes.fasta" databases/
-	mv databases/kegg_prokaryotes.fasta {output.kegg_prokaryotes_db}
+        mkdir -p {databases_dir}
+        python3 {params.kegg_script} -o {output.kegg_prokaryotes_db} -g {params.gense_list}
         """
 
 ############################################################
