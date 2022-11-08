@@ -1,17 +1,22 @@
 {
 
     "__default__": {
-        "account": "<account>",
-        "qos": "<account qos>",
+        "account": "boucher",
+        "qos": "boucher-b",
         "cpus-per-task": "1",
         "Nodes": 1,
         "mem": "32gb",
         "runtime": "72:00:00",
-        "jobname": "TLS-job",
-        "mail": "<email>",
-        "mail_type": "NONE",
+        "jobname": "all-job",
+        "mail": "nbonin@ufl.edu",
+        "mail_type": "FAIL",
         "out": "logs/log_%j.log",
         "err": "logs/err_%j.log"
+    },
+
+    "deduplicate":
+    {
+	"mem": "512gb"
     },
 
     "deduplicate_blat":
