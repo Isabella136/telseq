@@ -247,7 +247,7 @@ rule align_to_megares:
 
     shell:
         """
-        minimap2 -t {threads} {params.minimap_flags} {input.megares_v2_seqs} {input.reads} -o {output.megares_out_sam}
+        minimap2 -Y -t {threads} {params.minimap_flags} {input.megares_v2_seqs} {input.reads} -o {output.megares_out_sam}
         echo {input.reads}
 	echo "align_to_megares"
 	"""
@@ -274,7 +274,7 @@ rule align_to_mges:
 
     shell:
         """
-        minimap2 -t {threads} {params.minimap_flags} {input.mges_database} {input.reads} -o {output.mges_out_sam}
+        minimap2 -Y -t {threads} {params.minimap_flags} {input.mges_database} {input.reads} -o {output.mges_out_sam}
         echo {input.reads}
 	echo "align_to_mges"
 	"""
@@ -302,7 +302,7 @@ rule align_to_kegg:
 
     shell:
         """
-        minimap2 -t {threads} {params.minimap_flags} {input.kegg_database} {input.reads} -o {output.kegg_out_sam}
+        minimap2 -Y -t {threads} {params.minimap_flags} {input.kegg_database} {input.reads} -o {output.kegg_out_sam}
         echo {input.reads}
 	echo "align_to_kegg"
 	"""
