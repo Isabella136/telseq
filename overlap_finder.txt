@@ -1,0 +1,60 @@
+overlap_threshold = 0.5
+mgeDB = dict()
+mgeDBfasta = open()
+for every two lines in mgeDBfasta:
+	mgeDB[line1] = line2
+mgeDBfasta.close()
+read_mge_alignments = dict()
+mgeSAM = parse()
+for alignment in mgeSAM:
+	if alignment.query_name not in read_mge_alignments:
+		read_mge_alignments[alignment.query_name] = list()
+	read_mge_alignments[alignment.query_name].append((alignment.query_pos, alignment.ref_pos, alignment.ref_name))
+argDB = dict()
+argDBfasta = open()
+for every two lines in argDBfasta:
+	argDB[line1] = line2
+argDBfasta.close()
+read_arg_alignments = dict()
+argSAM = parse()
+for alignment in argSAM:
+	if alignment.query_name not in read_arg_alignments:
+		read_arg_alignments[alignment.query_name] = list()
+	read_arg_alignments[alignment.query_name].append(tuple(alignment.query_pos, alignment.ref_pos, alignment.ref_name))
+overlaps = dict()
+for query_name in read_mge_alignments:
+	for mge_alignment in read_mge_alignments[query_name]:
+		for arg_alignment in read_arg_alignments[query_name]:
+			 if mge_alignment[0].overlapsWith(arg_alignment[0]):
+			 	if (mge_alignment[2], arg_alignment[2]) not in overlaps:
+			 		overlaps[(mge_alignment[2], arg_alignment[2])] = list()
+		 		overlaps[(mge_alignment[2], arg_alignment[2])].append(tuple(mge_alignment[1], arg_alignment[1]))
+overlapping_mges = list()
+for references in overlaps:
+	if references[0] in overlapping_mges:
+		continue
+	arg_length = len(argDB[references[1]])
+	mge_length = len(mgeDB[references[0]])
+	smallest_is_arg = (arg_length <= mge_length)
+	if arg_length <= mge_length:
+		overlapping_bases = [False for i in range(arg_length)]
+		for reference_positions in overlaps[references]:
+			for i in range(reference_positions[1]):
+				overlapping_bases[i] = True
+		overlap_count = 0
+		for base in overlapping_bases:
+			if base: overlap_count += 1
+		if overlap_count/arg_length >= overlap_threshold:
+			overlapping_mges.append(references[0])
+	else:
+		overlapping_bases = [False for i in range(mge_length)]
+		for reference_positions in overlaps[references]:
+			for i in range(reference_positions[0]):
+				overlapping_bases[i] = True
+		overlap_count = 0
+		for base in overlapping_bases:
+			if base: overlap_count += 1
+		if overlap_count/mge_length >= overlap_threshold:
+			overlapping_mges.append(references[0])
+	
+		

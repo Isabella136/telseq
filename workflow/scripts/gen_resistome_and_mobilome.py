@@ -303,15 +303,15 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
         if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             continue
 
-        overlapping_with_amr_gene = False
-        if read.query_name in AMR_mapped_regions_per_read:
-            for region in AMR_mapped_regions_per_read[read.query_name]:
-                overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
-                if overlap != 0:
-                    overlapping_with_amr_gene = True
+        # overlapping_with_amr_gene = False
+        # if read.query_name in AMR_mapped_regions_per_read:
+        #     for region in AMR_mapped_regions_per_read[read.query_name]:
+        #         overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
+        #         if overlap != 0:
+        #             overlapping_with_amr_gene = True
 
-        if overlapping_with_amr_gene:
-            continue
+        # if overlapping_with_amr_gene:
+        #     continue
 
         # check coverage
         if (float(read.reference_length) / mges_gene_lengths[read.reference_name]) > float(
@@ -372,15 +372,15 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
         if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             continue
 
-        overlapping_with_amr_gene = False
-        if read.query_name in AMR_mapped_regions_per_read:
-            for region in AMR_mapped_regions_per_read[read.query_name]:
-                overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
-                if overlap != 0:
-                    overlapping_with_amr_gene = True
+        # overlapping_with_amr_gene = False
+        # if read.query_name in AMR_mapped_regions_per_read:
+        #     for region in AMR_mapped_regions_per_read[read.query_name]:
+        #         overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
+        #         if overlap != 0:
+        #             overlapping_with_amr_gene = True
 
-        if overlapping_with_amr_gene:
-            continue
+        # if overlapping_with_amr_gene:
+        #     continue
 
         for i in range(read.reference_start, read.reference_end):
             mge_genes[read.reference_name][i] = 1
