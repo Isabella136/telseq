@@ -12,6 +12,7 @@ from common import *
 def long_reads_strategy_resistome(config):
     # Get megares lengths for coverage
     AMR_mapped_regions_per_read = dict()
+    not_valid_AMR_mapped_region = dict()
 
     megares_gene_lengths = {}
     megares_reference_fasta_filename = config['DATABASE']['MEGARES']
@@ -35,6 +36,7 @@ def long_reads_strategy_resistome(config):
 
     # Iterate through every read. Accumulate number of reads while recording read length
     reads_aligned = set()
+    genes_per_read = dict()
     for read in sam_file.fetch():
         if read.is_unmapped:
             continue
@@ -74,11 +76,42 @@ def long_reads_strategy_resistome(config):
                 group_dict[group] += 1
 
             reads_aligned.add(read.query_name)
+            if read.query_name not in genes_per_read:
+                genes_per_read[read.query_name] = 0
+            genes_per_read[read.query_name] -= 1
 
             if read.query_name not in AMR_mapped_regions_per_read:
                 AMR_mapped_regions_per_read[read.query_name] = list()
-            AMR_mapped_regions_per_read[read.query_name].append([read.query_alignment_start, read.query_alignment_end])
+            AMR_mapped_regions_per_read[read.query_name].append([read.query_alignment_start, read.query_alignment_end, read.reference_name])
 
+    # Mobilome
+    logger = logging.getLogger()
+    strategy_mob = config['MISC']['MOBILOME_STRATEGY']
+    logger.info('Mobilome strategy: {}'.format(strategy_mob))
+    if strategy_mob == 'SHORT':
+        not_valid_AMR_mapped_region = short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
+    elif strategy_mob == 'LONG':
+        not_valid_AMR_mapped_region = long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
+    else:
+        logger.error("MOBILOME_STRATEGY must be in [LONG, SHORT], {} not supported".format(strategy_mob))
+
+    for query_name in AMR_mapped_regions_per_read:
+        for reference_info in AMR_mapped_regions_per_read[query_name]:
+            if query_name in not_valid_AMR_mapped_region:
+                if reference_info in not_valid_AMR_mapped_region[query_name]:
+                    gene_dict[reference_info[2]] -= 1
+                    genes_per_read[query_name] -= 1
+                    if genes_per_read[query_name] == 0:
+                        reads_aligned.remove(read.query_name)
+                    classname = megares_ontology[reference_info[2]]["class"]
+                    class_dict[classname] -= 1
+                    mech = megares_ontology[reference_info[2]]["mechanism"]
+                    mech_dict[mech] -= 1
+                    group = megares_ontology[reference_info[2]]["group"]
+                    group_dict[group] -= 1
+                    continue
+
+    
     # Prepare rows of diversity csv
     csv_rows = list()
     csv_rows.append(['Statistics'])
@@ -129,6 +162,7 @@ def short_reads_strategy_resistome(config):
     # Get megares gene for coverage
 
     AMR_mapped_regions_per_read = dict()
+    not_valid_AMR_mapped_region = dict()
 
     megares_genes = {}
     megares_reference_fasta_filename = config['DATABASE']['MEGARES']
@@ -194,7 +228,34 @@ def short_reads_strategy_resistome(config):
 
         if read.query_name not in AMR_mapped_regions_per_read:
             AMR_mapped_regions_per_read[read.query_name] = list()
-        AMR_mapped_regions_per_read[read.query_name].append([read.query_alignment_start, read.query_alignment_end])
+        AMR_mapped_regions_per_read[read.query_name].append([read.query_alignment_start, read.query_alignment_end, read.reference_name, read.reference_start, read.reference_end])
+
+    # Mobilome
+    logger = logging.getLogger()
+    strategy_mob = config['MISC']['MOBILOME_STRATEGY']
+    logger.info('Mobilome strategy: {}'.format(strategy_mob))
+    if strategy_mob == 'SHORT':
+        not_valid_AMR_mapped_region = short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
+    elif strategy_mob == 'LONG':
+        not_valid_AMR_mapped_region = long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
+    else:
+        logger.error("MOBILOME_STRATEGY must be in [LONG, SHORT], {} not supported".format(strategy_mob))
+
+    for query_name in AMR_mapped_regions_per_read:
+        for reference_info in AMR_mapped_regions_per_read[query_name]:
+            if query_name in not_valid_AMR_mapped_region:
+                if reference_info in not_valid_AMR_mapped_region[query_name]:
+                    gene_dict[reference_info[2]] -= 1
+                    reads_aligned_per_gene[reference_info[2]].remove(query_name)
+                    classname = megares_ontology[reference_info[2]]["class"]
+                    class_dict[classname] -= 1
+                    mech = megares_ontology[reference_info[2]]["mechanism"]
+                    mech_dict[mech] -= 1
+                    group = megares_ontology[reference_info[2]]["group"]
+                    group_dict[group] -= 1
+                    continue
+            for i in range(reference_info[3], reference_info[4]):
+                megares_genes[reference_info[2]][i] = 1
 
     # check coverage
     covered_genes = set()
@@ -270,6 +331,7 @@ def short_reads_strategy_resistome(config):
 
 
 def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
+    not_valid_AMR_mapped_region = dict()
     mges_gene_lengths = dict()
     mge_combined_reference_fasta_filename = config['DATABASE']['MGES']
 
@@ -280,6 +342,12 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
     reads_lengths = dict()
     with open(config['OUTPUT']['OUT_DIR'] + '/' + config['INPUT']['INPUT_FILE_NAME_EXT'] + config['EXTENSION']['READS_LENGTH'], 'rt') as reads_lengths_json_fp:
         reads_lengths = json.load(reads_lengths_json_fp)
+
+    # Get list of overlapped MGEs
+    overlapped_mges = list()
+    with csv.reader(open(config['INPUT']['OVERLAP_LIST'], 'r'), delimiter=',') as overlap_list: 
+        for mge_list in overlap_list:
+            overlapped_mges.append(mge_list[0])
 
     reads_aligned_to_args = dict()
     if config['INPUT']['ARGS_SAM_FILE'] != '':
@@ -303,15 +371,28 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
         if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             continue
 
-        # overlapping_with_amr_gene = False
-        # if read.query_name in AMR_mapped_regions_per_read:
-        #     for region in AMR_mapped_regions_per_read[read.query_name]:
-        #         overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
-        #         if overlap != 0:
-        #             overlapping_with_amr_gene = True
+        if read.reference_name in overlapped_mges: continue
 
-        # if overlapping_with_amr_gene:
-        #     continue
+        overlapping_with_amr_gene = False
+        current_length = 0 if read.query_name not in not_valid_AMR_mapped_region else len(not_valid_AMR_mapped_region[read.query_name])
+        if read.query_name in AMR_mapped_regions_per_read:
+            for region in AMR_mapped_regions_per_read[read.query_name]:
+                if (region[1] < read.query_alignment_end) and (region[0] >= read.query_alignment_start) :
+                    if read.query_name not in not_valid_AMR_mapped_region:
+                        not_valid_AMR_mapped_region[read.query_name] = list()
+                    not_valid_AMR_mapped_region[read.query_name].append(region[2])
+                elif (region[1] == read.query_alignment_end) and (region[0] > read.query_alignment_start) :
+                    if read.query_name not in not_valid_AMR_mapped_region:
+                        not_valid_AMR_mapped_region[read.query_name] = list()
+                    not_valid_AMR_mapped_region[read.query_name].append(region[2])
+                elif (region[1] >= read.query_alignment_end) and (region[0] <= read.query_alignment_start) :
+                    overlapping_with_amr_gene = True
+                    break
+
+        if overlapping_with_amr_gene:
+            while len(not_valid_AMR_mapped_region[read.query_name]) > current_length:
+                not_valid_AMR_mapped_region[read.query_name].pop(current_length)
+            continue
 
         # check coverage
         if (float(read.reference_length) / mges_gene_lengths[read.reference_name]) > float(
@@ -348,8 +429,11 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
     with open(filename_prefix + '_' + config['MISC']['MOBILOME_STRATEGY'] + "_mobilome.csv", 'w') as out_csv:
         csv_writer = csv.writer(out_csv)
         csv_writer.writerows(csv_rows)
+    return not_valid_AMR_mapped_region
+    
 
 def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
+    not_valid_AMR_mapped_region = dict()
     mge_genes = dict()
     mge_combined_reference_fasta_filename = config['DATABASE']['MGES']
     for rec in SeqIO.parse(mge_combined_reference_fasta_filename, "fasta"):
@@ -362,6 +446,12 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
     with open(config['OUTPUT']['OUT_DIR'] + '/' + config['INPUT']['INPUT_FILE_NAME_EXT'] + config['EXTENSION']['READS_LENGTH'], 'rt') as reads_lengths_json_fp:
         reads_lengths = json.load(reads_lengths_json_fp)
 
+    # Get list of overlapped MGEs
+    overlapped_mges = list()
+    with csv.reader(open(config['INPUT']['OVERLAP_LIST'], 'r'), delimiter=',') as overlap_list: 
+        for mge_list in overlap_list:
+            overlapped_mges.append(mge_list[0])
+
     gene_hits = dict()
     reads_aligned_per_gene = dict()
     # Iterate through every read. Accumulate number of reads aligned and number of alignments per aclame mge
@@ -372,15 +462,28 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
         if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             continue
 
-        # overlapping_with_amr_gene = False
-        # if read.query_name in AMR_mapped_regions_per_read:
-        #     for region in AMR_mapped_regions_per_read[read.query_name]:
-        #         overlap = max(0, min(region[1], read.query_alignment_end) - max(region[0], read.query_alignment_start))
-        #         if overlap != 0:
-        #             overlapping_with_amr_gene = True
+        if read.reference_name in overlapped_mges: continue
 
-        # if overlapping_with_amr_gene:
-        #     continue
+        overlapping_with_amr_gene = False
+        current_length = 0 if read.query_name not in not_valid_AMR_mapped_region else len(not_valid_AMR_mapped_region[read.query_name])
+        if read.query_name in AMR_mapped_regions_per_read:
+            for region in AMR_mapped_regions_per_read[read.query_name]:
+                if (region[1] < read.query_alignment_end) and (region[0] >= read.query_alignment_start) :
+                    if read.query_name not in not_valid_AMR_mapped_region:
+                        not_valid_AMR_mapped_region[read.query_name] = list()
+                    not_valid_AMR_mapped_region[read.query_name].append(region[2])
+                elif (region[1] == read.query_alignment_end) and (region[0] > read.query_alignment_start) :
+                    if read.query_name not in not_valid_AMR_mapped_region:
+                        not_valid_AMR_mapped_region[read.query_name] = list()
+                    not_valid_AMR_mapped_region[read.query_name].append(region[2])
+                elif (region[1] >= read.query_alignment_end) and (region[0] <= read.query_alignment_start) :
+                    overlapping_with_amr_gene = True
+                    break
+
+        if overlapping_with_amr_gene:
+            while len(not_valid_AMR_mapped_region[read.query_name]) > current_length:
+                not_valid_AMR_mapped_region[read.query_name].pop(current_length)
+            continue
 
         for i in range(read.reference_start, read.reference_end):
             mge_genes[read.reference_name][i] = 1
@@ -426,7 +529,7 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
     with open(filename_prefix + '_' + config['MISC']['MOBILOME_STRATEGY'] + "_mobilome.csv", 'w') as out_csv:
         csv_writer = csv.writer(out_csv)
         csv_writer.writerows(csv_rows)
-
+    return not_valid_AMR_mapped_region
 
 
 def main():
@@ -436,6 +539,7 @@ def main():
     parser.add_argument('-m', help='MGES Alignment file', dest='mges_sam', required=True)
     parser.add_argument('-o', help='Output Prefix', dest='out_prefix', required=True)
     parser.add_argument('-c', help='Config file', dest='config_path', required=True)
+    parser.add_argument('-s', help='Overlapped MGEs list', dest='overlap', required=True)
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
@@ -446,6 +550,7 @@ def main():
     config['INPUT'] = dict()
     config['INPUT']['ARGS_SAM_FILE'] = args.args_sam
     config['INPUT']['MGES_SAM_FILE'] = args.mges_sam
+    config['INPUT']['OVERLAP_LIST'] = args.overlap
     config['INPUT']['INPUT_FILE_NAME_EXT'] = os.path.basename(args.reads_file)
     config['INPUT']['INPUT_FILE_NAME_NO_EXT'] = os.path.splitext(config['INPUT']['INPUT_FILE_NAME_EXT'])[0]
     config['INPUT']['INPUT_FILE_PATH'] = os.path.dirname(os.path.abspath(args.reads_file))
@@ -456,24 +561,16 @@ def main():
     config['OUTPUT']['OUT_DIR'] = os.path.dirname(os.path.abspath(config['OUTPUT']['OUTPUT_PREFIX']))
 
     # Resistome
-    strategy = config['MISC']['RESISTOME_STRATEGY']
-    logger.info('Resistome strategy: {}'.format(strategy))
-    if strategy == 'SHORT':
+    strategy_res = config['MISC']['RESISTOME_STRATEGY']
+    logger.info('Resistome strategy: {}'.format(strategy_res))
+    if strategy_res == 'SHORT':
         AMR_mapped_regions_per_read = short_reads_strategy_resistome(config)
-    elif strategy == 'LONG':
+    elif strategy_res == 'LONG':
         AMR_mapped_regions_per_read = long_reads_strategy_resistome(config)
     else:
-        logger.error("RESISTOME_STRATEGY must be in [LONG, SHORT], {} not supported".format(strategy))
+        logger.error("RESISTOME_STRATEGY must be in [LONG, SHORT], {} not supported".format(strategy_res))
 
-    # Mobilome
-    strategy = config['MISC']['MOBILOME_STRATEGY']
-    logger.info('Mobilome strategy: {}'.format(strategy))
-    if strategy == 'SHORT':
-        short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
-    elif strategy == 'LONG':
-        long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read)
-    else:
-        logger.error("RESISTOME_STRATEGY must be in [LONG, SHORT], {} not supported".format(strategy))
+
 
 
 if __name__ == "__main__":

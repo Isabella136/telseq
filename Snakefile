@@ -34,6 +34,7 @@ EXTS = [
     DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
     DEDUP_STRING + config["EXTENSION"]["COLOCALIZATIONS"],
     DEDUP_STRING + config["EXTENSION"]["COLOCALIZATIONS_RICHNESS"],
+    DEDUP_STRING + config['EXTENSION']['OVERLAP'],
     DEDUP_STRING + "_" + config["MISC"]["RESISTOME_STRATEGY"] + config["EXTENSION"]["RESISTOME_RICHNESS"],
     DEDUP_STRING + "_" + config["MISC"]["RESISTOME_STRATEGY"] + config["EXTENSION"]["RESISTOME_DIVERSITY"],
     DEDUP_STRING + "_" + config["MISC"]["MOBILOME_STRATEGY"] + config["EXTENSION"]["MOBILOME"]]
@@ -119,8 +120,6 @@ rule deduplicate_create_clusters:
         mkdir -p {params.tmp_dir_clusters}
         python {params.clustering_script} -r {input.reads} -o {params.tmp_dir_clusters} \
             -n {params.num_of_clusters} -l {input.reads_lengths}
-	echo {input.reads}
-        echo "deduplicate_creat_clusters"
         """
 
 rule deduplicate_blat:
@@ -144,8 +143,6 @@ rule deduplicate_blat:
         """
         mkdir -p {params.out_pls_dir}
         blat {input.reads_cluster} {input.reads_cluster} {output.out_pls}
-        echo {input.reads_cluster}
-        echo "deduplicate_blat"
 	"""
 
 rule deduplicate_find_duplicates:
@@ -217,8 +214,6 @@ rule not_deduplicated_reads:
     shell:
         """
         ln -s {input.reads} {output.out_reads}
-	echo {input.reads}
-	echo "not_deduplicated_reads"
         """
 
 #################################################e###########s
@@ -248,9 +243,7 @@ rule align_to_megares:
     shell:
         """
         minimap2 -Y -t {threads} {params.minimap_flags} {input.megares_v2_seqs} {input.reads} -o {output.megares_out_sam}
-        echo {input.reads}
-	echo "align_to_megares"
-	"""
+	    """
 
 rule align_to_mges:
     input:
@@ -275,9 +268,7 @@ rule align_to_mges:
     shell:
         """
         minimap2 -Y -t {threads} {params.minimap_flags} {input.mges_database} {input.reads} -o {output.mges_out_sam}
-        echo {input.reads}
-	echo "align_to_mges"
-	"""
+    	"""
 
 rule align_to_kegg:
     input:
@@ -303,9 +294,7 @@ rule align_to_kegg:
     shell:
         """
         minimap2 -Y -t {threads} {params.minimap_flags} {input.kegg_database} {input.reads} -o {output.kegg_out_sam}
-        echo {input.reads}
-	echo "align_to_kegg"
-	"""
+        """
 
 rule pass_config_file:
     output:
@@ -324,12 +313,45 @@ rule pass_config_file:
             config_parser.read_dict(config_to_pass)
             config_parser.write(configfile_out)
 
+rule overlap:
+    input:
+        megares_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MEGARES"],
+        mges_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MGES"],
+        reads_length = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
+        dedup_reads_length = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
+        config_file = "config.ini"
+
+    params:
+        overlap_script = workflow.basedir + "/" + config["SCRIPTS"]["FIND_OVERLAP"]
+        output_prefix = "{sample_name}.fastq" + DEDUP_STRING
+
+    conda:
+        "workflow/envs/pipeline.yaml"
+
+    envmodules:
+        "python/3.8"
+
+    output:
+        overlap = "{sample_name}.fastq" + DEDUP_STRING + config['EXTENSION']['OVERLAP']
+
+    shell:
+        """
+        python {params.overlap_script} \
+            -r {wildcards.sample_name}.fastq \
+            -a {input.megares_sam} \
+            -m {input.mges_sam} \
+            -c {input.config_file} \
+            -o {params.output_prefix} \
+        """
+
+
 rule resistome_and_mobilome:
     input:
         megares_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MEGARES"],
         mges_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MGES"],
-        reads_lenght = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
-        dedup_reads_lenght = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
+        reads_length = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
+        dedup_reads_length = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
+        overlap = "{sample_name}.fastq" + DEDUP_STRING + config['EXTENSION']['OVERLAP'],
         config_file = "config.ini"
 
     params:
@@ -355,10 +377,9 @@ rule resistome_and_mobilome:
             -a {input.megares_sam} \
             -m {input.mges_sam} \
             -c {input.config_file} \
-            -o {params.output_prefix}
-        echo {input.megares_sam}
-	echo "res_and_mob"
-	"""
+            -o {params.output_prefix} \
+            -s {input.overlap}
+        """
 
 rule find_colocalizations:
     input:
@@ -366,8 +387,9 @@ rule find_colocalizations:
         megares_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MEGARES"],
         mges_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MGES"],
         kegg_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_KEGG"],
-        reads_lenght = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
-        dedup_reads_lenght = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
+        reads_length = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
+        dedup_reads_length = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
+        overlap = "{sample_name}.fastq" + DEDUP_STRING + config['EXTENSION']['OVERLAP'],
         config_file = "config.ini"
 
     params:
@@ -390,11 +412,10 @@ rule find_colocalizations:
             --mge {input.mges_sam} \
             -k {input.kegg_sam} \
             -c {input.config_file} \
+            -s {input.overlap} \
             -o {params.output_directory} \
             > {output.colocalizations}
-        echo {input.reads}
-	echo "find_colocalizations"
-	"""
+        """
 
 rule colocalization_richness:
     input:
@@ -418,9 +439,7 @@ rule colocalization_richness:
             -i {input.colocalizations} \
             -c {input.config_file} \
             > {output.colocalizations_richness}
-        echo {input.colocalizations}
-	echo "colocalization_richness"
-	"""
+        """
 
 
 ############################################################

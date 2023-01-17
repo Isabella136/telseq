@@ -65,7 +65,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
             if read.is_unmapped:
                 continue
 
-            if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+            # if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+            if read.is_secondary:
                 continue
 
             # Check coverage
@@ -93,7 +94,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
                 if read.is_unmapped:
                     continue
 
-                if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+                # if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+                if read.is_secondary:
                     continue
 
                 # Check coverage
@@ -116,7 +118,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
             if read.is_unmapped:
                 continue
 
-            if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+            # if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
+            if read.is_secondary:
                 continue
 
             # Check coverage
@@ -207,27 +210,19 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
 
         # First take all the non-overlapping ARGS
         for idx, aligned_gene in enumerate(sorted_candidate_coloc_list):
-            if aligned_gene[2] == 'amr':
-                if len(colocalization) == 0 or aligned_gene[1][0] > colocalization[-1][1][1]:
-                    colocalization.append(aligned_gene)
+            if len(colocalization) == 0 or aligned_gene[1][0] > colocalization[-1][1][1]:
+                colocalization.append(aligned_gene)
+                if aligned_gene[2] == 'amr':
                     has_ARG = True
-
-        # Now fit all non overlapping mges
-        for idx, aligned_gene in enumerate(sorted_candidate_coloc_list):
-            if aligned_gene[2] == 'mge':
-                ti_coloc = [c[1] for c in colocalization]
-                ti_coloc.append(aligned_gene[1])
-                if not_overlapping(ti_coloc):
-                    colocalization.append(aligned_gene)
+                if aligned_gene[2] == 'mge':
                     has_MGE = True
-
-        # Finally fit all non overlapping genes from Kegg
-        for idx, aligned_gene in enumerate(sorted_candidate_coloc_list):
-            if aligned_gene[2] == 'kegg':
-                ti_coloc = [c[1] for c in colocalization]
-                ti_coloc.append(aligned_gene[1])
-                if not_overlapping(ti_coloc):
-                    colocalization.append(aligned_gene)
+            elif (aligned_gene[1][0] <= colocalization[-1][1][1]) and (aligned_gene[1][1] > colocalization[-1][1][1]):
+                aligned_gene[1][0] = colocalization[-1][1][1]+1
+                colocalization.append(aligned_gene)
+                if aligned_gene[2] == 'amr':
+                    has_ARG = True
+                if aligned_gene[2] == 'mge':
+                    has_MGE = True
 
         if has_ARG and has_MGE:
             colocalizations[read] = colocalization
@@ -257,12 +252,14 @@ def main():
     parser.add_argument('-r', help='Reads file', dest='reads_file', required=True)
     parser.add_argument('-c', help='Config file', dest='config_path', required=True)
     parser.add_argument('-o', help='Output directory', dest='output_dir_path', required=True)
+    parser.add_argument('-s', help='Overlapped MGEs list', dest='overlap_list', required=True)
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
     config.read(args.config_path)
 
     config['INPUT'] = dict()
+    config['INPUT']['OVERLAP_LIST'] = args.overlap_list
     config['INPUT']['INPUT_FILE_NAME_EXT'] = os.path.basename(args.reads_file)
     config['INPUT']['INPUT_FILE_NAME_NO_EXT'] = os.path.splitext(config['INPUT']['INPUT_FILE_NAME_EXT'])[0]
     config['INPUT']['INPUT_FILE_PATH'] = os.path.dirname(os.path.abspath(args.reads_file))
