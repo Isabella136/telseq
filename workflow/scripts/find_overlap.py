@@ -64,6 +64,8 @@ def overlap_finder(config, single):
     logger.info('Organize overlaps by MGE-ARG gene pairs')
     overlaps = dict()
     for query_name in read_mge_alignments:
+        if query_name not in read_arg_alignments:
+            continue
         for mge_alignment in read_mge_alignments[query_name]:
             for arg_alignment in read_arg_alignments[query_name]:
 
@@ -141,7 +143,7 @@ def overlap_finder(config, single):
     logger.info('Write overlapped MGEs to output file')
     with open(config['OUTPUT']['OUTPUT_PREFIX'] + config['EXTENSION']['OVERLAP'], 'w') as out_csv:
         csv_write = csv.writer(out_csv)
-        csv_write.writerow(overlapped_mges)
+        csv_write.writerows(overlapped_mges)
     logger.info('END OF OVERLAP_FINDER FUNCTION')
 
 

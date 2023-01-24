@@ -24,7 +24,7 @@ module load snakemake
 ##----------------------------------------------------------
 # Run
 
-#snakemake --touch -j 10000 --rerun-incomplete 
+snakemake --touch --forceall -j 1000 --rerun-incomplete 
 
 snakemake --cluster "sbatch -A {cluster.account} -q {cluster.qos} -c {cluster.cpus-per-task} -N {cluster.Nodes} \
   -t {cluster.runtime} --mem {cluster.mem} -J {cluster.jobname} --mail-type={cluster.mail_type} \

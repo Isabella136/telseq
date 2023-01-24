@@ -322,7 +322,7 @@ rule overlap:
         config_file = "config.ini"
 
     params:
-        overlap_script = workflow.basedir + "/" + config["SCRIPTS"]["FIND_OVERLAP"]
+        overlap_script = workflow.basedir + "/" + config["SCRIPTS"]["FIND_OVERLAP"],
         output_prefix = "{sample_name}.fastq" + DEDUP_STRING
 
     conda:

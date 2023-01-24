@@ -69,7 +69,7 @@
     "CLUSTER_READS" : "workflow/scripts/cluster_reads_by_read_length.py",
     "FIND_DUPLICATES" : "workflow/scripts/find_duplicates_in_cluster.py",
     "DEDUPLICATE" : "workflow/scripts/deduplicate.py",
-    "FIND_OVERLAP" : "workflow/script/find_overlap.py",
+    "FIND_OVERLAP" : "workflow/scripts/find_overlap.py",
     "GEN_RESISTOME_AND_MOBILOME" : "workflow/scripts/gen_resistome_and_mobilome.py",
     "FIND_COLOCALIZATIONS" : "workflow/scripts/find_colocalizations.py",
     "COLOCALIZATIONS_RICHNESS" : "workflow/scripts/colocalization_richness.py",
