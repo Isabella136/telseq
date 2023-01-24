@@ -345,9 +345,9 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
 
     # Get list of overlapped MGEs
     overlapped_mges = list()
-    with csv.reader(open(config['INPUT']['OVERLAP_LIST'], 'r'), delimiter=',') as overlap_list: 
-        for mge_list in overlap_list:
-            overlapped_mges.append(mge_list[0])
+    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+        for mge in overlap_list:
+            overlapped_mges.append(mge)
 
     reads_aligned_to_args = dict()
     if config['INPUT']['ARGS_SAM_FILE'] != '':
@@ -448,9 +448,9 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
 
     # Get list of overlapped MGEs
     overlapped_mges = list()
-    with csv.reader(open(config['INPUT']['OVERLAP_LIST'], 'r'), delimiter=',') as overlap_list: 
-        for mge_list in overlap_list:
-            overlapped_mges.append(mge_list[0])
+    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+        for mge in overlap_list:
+            overlapped_mges.append(mge)
 
     gene_hits = dict()
     reads_aligned_per_gene = dict()

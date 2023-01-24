@@ -34,6 +34,11 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
 
     reads_file_handle.close()
 
+    overlapped_mges = list()
+    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+        for mge in overlap_list:
+            overlapped_mges.append(mge)
+
     # Get AMR genes lengths for coverage
     logger.info("Reading ARGS DB")
     megares_gene_lengths = {}
@@ -121,6 +126,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
             # if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             if read.is_secondary:
                 continue
+
+            if read.reference_name in overlapped_mges: continue
 
             # Check coverage
             gene_length = mge_gene_lengths[read.reference_name]
@@ -216,7 +223,7 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
                     has_ARG = True
                 if aligned_gene[2] == 'mge':
                     has_MGE = True
-            elif (aligned_gene[1][0] <= colocalization[-1][1][1]) and (aligned_gene[1][1] > colocalization[-1][1][1]):
+            elif (aligned_gene[1][0] > colocalization[-1][1][0]) and (aligned_gene[1][1] > colocalization[-1][1][1]):
                 aligned_gene[1][0] = colocalization[-1][1][1]+1
                 colocalization.append(aligned_gene)
                 if aligned_gene[2] == 'amr':
