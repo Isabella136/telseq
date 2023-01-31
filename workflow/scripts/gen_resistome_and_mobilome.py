@@ -389,7 +389,7 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
                     overlapping_with_amr_gene = True
                     break
 
-        if overlapping_with_amr_gene:
+        if overlapping_with_amr_gene and (read.query_name in not_valid_AMR_mapped_region):
             while len(not_valid_AMR_mapped_region[read.query_name]) > current_length:
                 not_valid_AMR_mapped_region[read.query_name].pop(current_length)
             continue
@@ -480,7 +480,7 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
                     overlapping_with_amr_gene = True
                     break
 
-        if overlapping_with_amr_gene:
+        if overlapping_with_amr_gene and (read.query_name in not_valid_AMR_mapped_region):
             while len(not_valid_AMR_mapped_region[read.query_name]) > current_length:
                 not_valid_AMR_mapped_region[read.query_name].pop(current_length)
             continue
