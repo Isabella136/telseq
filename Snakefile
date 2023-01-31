@@ -347,7 +347,8 @@ rule overlap:
 rule merge_overlap_info:
     input: expand("{sample_name}.fastq" + DEDUP_STRING + config['EXTENSION']['OVERLAP'], sample_name = SAMPLES)
 
-    output: 'merged_overlaped_mges_info.csv'
+    output: 
+        merged_info = 'merged_overlaped_mges_info.csv'
     
     run:
         import csv
@@ -357,7 +358,7 @@ rule merge_overlap_info:
                 overlap_reader = csv.reader(overlap_info_file, delimiter=',')
                 for row in overlap_reader:
                     merged_overlaped_mges_info.add(row[0])
-        with open(output) as merged:
+        with open(output[0]) as merged:
             merged_writer = csv.writer(merged, delimiter=',')
             for mge in merged_overlaped_mges_info:
                 merged_writer.writerow([mge])
