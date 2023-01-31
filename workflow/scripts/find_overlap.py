@@ -142,9 +142,9 @@ def overlap_finder(config, single):
     logger.info('Found {} MGEs that overlap with ARGs'.format(str(len(overlapped_mges))))
     logger.info('Write overlapped MGEs to output file')
     with open(config['OUTPUT']['OUTPUT_PREFIX'] + config['EXTENSION']['OVERLAP'], 'w') as out_csv:
-        csv_write = csv.writer(out_csv, delimiter= '')
+        csv_write = csv.writer(out_csv, delimiter= ',')
         for mge in overlapped_mges:
-            csv_write.writerow(mge)
+            csv_write.writerow([mge])
     logger.info('END OF OVERLAP_FINDER FUNCTION')
 
 
