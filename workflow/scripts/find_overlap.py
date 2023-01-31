@@ -105,7 +105,7 @@ def overlap_finder(config, single):
                 overlapping_bases = [False for i in range(mge_length)]
                 for reference_positions in overlaps[references]:
                     for i in range(reference_positions[0][0], reference_positions[0][1]):
-                        overlapping_bases[i] = False
+                        overlapping_bases[i] = True
                 overlap_count = 0
                 for base in overlapping_bases:
                     if base: overlap_count += 1
@@ -132,7 +132,7 @@ def overlap_finder(config, single):
                 overlapping_bases = [False for i in range(mge_length)]
                 for reference_positions in overlaps[references]:
                     for i in range(reference_positions[0][0], reference_positions[0][1]):
-                        overlapping_bases[i] = False
+                        overlapping_bases[i] = True
                 overlap_count = 0
                 for base in overlapping_bases:
                     if base: overlap_count += 1

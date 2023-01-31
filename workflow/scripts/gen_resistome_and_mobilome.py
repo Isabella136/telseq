@@ -345,7 +345,7 @@ def long_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
 
     # Get list of overlapped MGEs
     overlapped_mges = list()
-    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+    with open(config['INPUT']['OVERLAP_LIST'], 'r') as overlap_list: 
         for mge in overlap_list:
             overlapped_mges.append(mge)
 
@@ -448,7 +448,7 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
 
     # Get list of overlapped MGEs
     overlapped_mges = list()
-    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+    with open(config['INPUT']['OVERLAP_LIST'], 'r') as overlap_list: 
         for mge in overlap_list:
             overlapped_mges.append(mge)
 

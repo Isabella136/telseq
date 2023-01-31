@@ -35,7 +35,7 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
     reads_file_handle.close()
 
     overlapped_mges = list()
-    with open(config['INPUT']['OVERLAP_LIST'], 'r', newline='') as overlap_list: 
+    with open(config['INPUT']['OVERLAP_LIST'], 'r') as overlap_list: 
         for mge in overlap_list:
             overlapped_mges.append(mge)
 
