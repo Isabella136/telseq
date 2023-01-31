@@ -368,7 +368,7 @@ rule resistome_and_mobilome:
         mges_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_MGES"],
         reads_length = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
         dedup_reads_length = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
-        overlap = 'merged_overlaped_mges_info.csv'
+        overlap = 'merged_overlaped_mges_info.csv',
         config_file = "config.ini"
 
     params:
@@ -406,7 +406,7 @@ rule find_colocalizations:
         kegg_sam = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["A_TO_KEGG"],
         reads_length = "{sample_name}.fastq" + config["EXTENSION"]["READS_LENGTH"],
         dedup_reads_length = "{sample_name}.fastq" + DEDUP_STRING + config["EXTENSION"]["READS_LENGTH"],
-        overlap = 'merged_overlaped_mges_info.csv'
+        overlap = 'merged_overlaped_mges_info.csv',
         config_file = "config.ini"
 
     params:
