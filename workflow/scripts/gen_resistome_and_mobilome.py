@@ -450,7 +450,7 @@ def short_reads_strategy_mobilome(config, AMR_mapped_regions_per_read):
     overlapped_mges = list()
     with open(config['INPUT']['OVERLAP_LIST'], 'r') as overlap_list: 
         for mge in overlap_list:
-            overlapped_mges.append(mge)
+            overlapped_mges.append(mge[:-1])
 
     gene_hits = dict()
     reads_aligned_per_gene = dict()

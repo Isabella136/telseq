@@ -37,7 +37,7 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
     overlapped_mges = list()
     with open(config['INPUT']['OVERLAP_LIST'], 'r') as overlap_list: 
         for mge in overlap_list:
-            overlapped_mges.append(mge)
+            overlapped_mges.append(mge[:-1])
 
     # Get AMR genes lengths for coverage
     logger.info("Reading ARGS DB")
