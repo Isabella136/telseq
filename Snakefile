@@ -355,7 +355,7 @@ rule merge_overlap_info:
         for overlap_info_filename in input:
             with open(overlap_info_filename) as overlap_info_file:
                 overlap_reader = csv.reader(overlap_info_file, delimiter=',')
-                for row in overlap_reader
+                for row in overlap_reader:
                     merged_overlaped_mges_info.add(row[0])
         with open(output) as merged:
             merged_writer = csv.writer(merged, delimiter=',')
