@@ -14,11 +14,6 @@
         "err": "logs/err_%j.log"
     },
 
-    "deduplicate":
-    {
-	"mem": "512gb"
-    },
-
     "deduplicate_blat":
     {
         "cpus-per-task": "8",
