@@ -78,7 +78,7 @@ def long_reads_strategy_resistome(config):
             reads_aligned.add(read.query_name)
             if read.query_name not in genes_per_read:
                 genes_per_read[read.query_name] = 0
-            genes_per_read[read.query_name] -= 1
+            genes_per_read[read.query_name] += 1
 
             if read.query_name not in AMR_mapped_regions_per_read:
                 AMR_mapped_regions_per_read[read.query_name] = list()
@@ -100,15 +100,23 @@ def long_reads_strategy_resistome(config):
             if query_name in not_valid_AMR_mapped_region:
                 if reference_info in not_valid_AMR_mapped_region[query_name]:
                     gene_dict[reference_info[2]] -= 1
+                    if gene_dict[reference_info[2]] == 0:
+                        gene_dict.pop(reference_info[2])
                     genes_per_read[query_name] -= 1
                     if genes_per_read[query_name] == 0:
                         reads_aligned.remove(read.query_name)
                     classname = megares_ontology[reference_info[2]]["class"]
                     class_dict[classname] -= 1
+                    if class_dict[classname] == 0:
+                        class_dict.pop(classname)
                     mech = megares_ontology[reference_info[2]]["mechanism"]
                     mech_dict[mech] -= 1
+                    if mech_dict[mech] == 0:
+                        mech_dict.pop(mech)
                     group = megares_ontology[reference_info[2]]["group"]
                     group_dict[group] -= 1
+                    if group_dict[group] == 0:
+                        group_dict.pop(group)
                     continue
 
     
@@ -192,9 +200,6 @@ def short_reads_strategy_resistome(config):
         if config['MISC']['USE_SECONDARY_ALIGNMENTS'] not in ['True', 'true'] and read.is_secondary:
             continue
 
-        for i in range(read.reference_start, read.reference_end):
-            megares_genes[read.reference_name][i] = 1
-
         classname = megares_ontology[read.reference_name]["class"]
         mech = megares_ontology[read.reference_name]["mechanism"]
         group = megares_ontology[read.reference_name]["group"]
@@ -202,11 +207,13 @@ def short_reads_strategy_resistome(config):
         # update gene dict
         if (not read.reference_name in gene_dict):
             gene_dict[read.reference_name] = 1
-            reads_aligned_per_gene[read.reference_name] = set()
-            reads_aligned_per_gene[read.reference_name].add(read.query_name)
+            reads_aligned_per_gene[read.reference_name] = dict()
+            reads_aligned_per_gene[read.reference_name][read.query_name] = 1
         else:
             gene_dict[read.reference_name] += 1
-            reads_aligned_per_gene[read.reference_name].add(read.query_name)
+            if read.query_name not in reads_aligned_per_gene[read.reference_name]:
+                reads_aligned_per_gene[read.reference_name][read.query_name] = 0
+            reads_aligned_per_gene[read.reference_name][read.query_name] += 1
 
         # update class dict
         if classname not in class_dict:
@@ -246,13 +253,21 @@ def short_reads_strategy_resistome(config):
             if query_name in not_valid_AMR_mapped_region:
                 if reference_info in not_valid_AMR_mapped_region[query_name]:
                     gene_dict[reference_info[2]] -= 1
-                    reads_aligned_per_gene[reference_info[2]].remove(query_name)
+                    reads_aligned_per_gene[reference_info[2]][query_name] -= 1
+                    if reads_aligned_per_gene[reference_info[2]][query_name] == 0:
+                        reads_aligned_per_gene[reference_info[2]].pop(query_name)
                     classname = megares_ontology[reference_info[2]]["class"]
                     class_dict[classname] -= 1
+                    if class_dict[classname] == 0:
+                        class_dict.pop(classname)
                     mech = megares_ontology[reference_info[2]]["mechanism"]
                     mech_dict[mech] -= 1
+                    if mech_dict[mech] == 0:
+                        mech_dict.pop(mech)
                     group = megares_ontology[reference_info[2]]["group"]
                     group_dict[group] -= 1
+                    if group_dict[group] == 0:
+                        group_dict.pop(group)
                     continue
             for i in range(reference_info[3], reference_info[4]):
                 megares_genes[reference_info[2]][i] = 1
@@ -263,7 +278,7 @@ def short_reads_strategy_resistome(config):
     for megares_gene, coverage_vector in megares_genes.items():
         if (float(sum(coverage_vector) / len(coverage_vector)) > float(config['MISC']['GLOBAL_AMR_THRESHOLD'])):
             covered_genes.add(megares_gene)
-            reads_aligned.update(reads_aligned_per_gene[megares_gene])
+            reads_aligned.update(list(reads_aligned_per_gene[megares_gene].keys()))
 
 
     # Get only covered genes
