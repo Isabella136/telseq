@@ -660,14 +660,20 @@ rule get_MGEs_DBs:
 
 rule get_KEGG_DBs:
     output:
-        touch(databases_dir + "/kegg_genes.fasta")
+        kegg_prokaryotes_db = databases_dir + "/kegg_genes.fasta"
     conda:
         "workflow/envs/download_databases.yaml"
     envmodules:
-        "python/3.8"
+        "python/3.10"
+
+    params:
+        kegg_script = workflow.basedir + "/" + config["SCRIPTS"]["DOWNLOAD_KEGG"],
+        gense_list = config['MISC']['KEGG_ORGANISMS']
+
     shell:
         """
         mkdir -p {databases_dir}
+        python3 {params.kegg_script} -o {output.kegg_prokaryotes_db} -g {params.gense_list}
         """
 
 ############################################################

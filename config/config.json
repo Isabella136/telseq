@@ -45,12 +45,11 @@
     "OVERLAP_THRESHOLD_STRATEGY" : "ONE",
     "USE_SECONDARY_ALIGNMENTS" : "True",
     "MAX_BP_COLOCALIZATIONS_PLOT" : 5000,
-    "KEGG_ORGANISMS" : ["dme", "ath", "sce", "pfa", "eco",
-                        "sty", "hin", "pae", "nme", "hpy",
-                        "rpr", "mlo", "bsu", "sau", "lla",
-                        "spn", "cac", "mge", "mtu", "ctr",
-                        "bbu", "syn", "aae", "mja", "afu",
-                        "pho", "ape"],
+    "KEGG_ORGANISMS" : ["eco", "sty", "hin", "pae", "nme", 
+                        "hpy", "rpr", "mlo", "bsu", "sau",
+                        "lla", "spn", "cac", "mge", "mtu",
+                        "ctr", "bbu", "syn", "aae", "mja",
+                        "afu", "pho", "ape"],
     "PLASMID_FINDER_COMMIT" : "1307168b1ce7418b9f7aa9a017ab3c8eb55bc595"
   },
 

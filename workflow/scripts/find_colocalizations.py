@@ -173,8 +173,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
 
             genes_lists[read] = list()
             genes_lists[read].extend(amr_genes_list)
-            genes_lists[read].extend(kegg_genes_list)
             genes_lists[read].extend(mge_genes_list)
+            genes_lists[read].extend(kegg_genes_list)
 
             amr_genes_concatenated_names = list()
             amr_genes_concatenated_pos = list()
@@ -217,6 +217,8 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
 
         # First take all the non-overlapping ARGS
         for idx, aligned_gene in enumerate(sorted_candidate_coloc_list):
+            if aligned_gene[2] == 'kegg':
+                continue
             if len(colocalization) == 0 or aligned_gene[1][0] > colocalization[-1][1][1]:
                 colocalization.append(aligned_gene)
                 if aligned_gene[2] == 'amr':
@@ -230,6 +232,14 @@ def get_colocalizations(config, reads_file_path, to_megares_path, to_mges_path, 
                     has_ARG = True
                 if aligned_gene[2] == 'mge':
                     has_MGE = True
+
+        # Finally fit all non overlapping genes from Kegg
+        for idx, aligned_gene in enumerate(sorted_candidate_coloc_list):
+            if aligned_gene[2] == 'kegg':
+                ti_coloc = [c[1] for c in colocalization]
+                ti_coloc.append(aligned_gene[1])
+                if not_overlapping(ti_coloc):
+                    colocalization.append(aligned_gene)
 
         if has_ARG and has_MGE:
             colocalizations[read] = colocalization
