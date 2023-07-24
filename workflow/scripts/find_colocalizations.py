@@ -316,8 +316,11 @@ def main():
         arg_position = ""
         for gene in colocalization:
             if gene[2] == 'amr':
-                arg = gene[0]
-                arg_position = "{}:{}".format(gene[1][0], gene[1][1])
+                if arg != "":
+                    arg += ';'
+                    arg_position += ';'
+                arg += gene[0]
+                arg_position += "{}:{}".format(gene[1][0], gene[1][1])
 
         # Mges
         mges = ""
